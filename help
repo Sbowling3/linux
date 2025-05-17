@@ -26,6 +26,7 @@ List Disks: lsblk
 Check Physical Volumes: pvs
 Check Volume Groups: vgs
 Check Logical Volumes: lvs
+Check FileSystem Sizes: df -h
 Resize the Physical Volume: pvresize /dev/sdX
 Check the Physical Volume: pvdisplay /dev/sdX
 Logical Volume Resize: lvresize -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
