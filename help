@@ -1,0 +1,218 @@
+##########
+LINUX HELP
+##########
+
+COMMON COMMANDS
+#######################################################
+Stay Elevated in Terminal: sudo -i
+Update Linux Packages:
+apt update
+apt upgrade
+Edit files: nano
+View files: cat
+View Network Info: ip A or ip addr 
+Remove service: apt remove <service name>
+
+Change Ownership of Folder:
+chown -R /Path/To/Folder
+chmod -R u=rwx /Path/To/Folder
+
+#######################################################
+NEW LINUX INSTALL STUFF:
+
+apt install openssh-server
+apt install curl
+curl -fsS https://dl.brave.com/install.sh | sh
+
+
+#######################################################
+Networking settings Location:
+nano /etc/network/interfaces
+
+Setup SSH:
+apt install openssh-server
+
+#######################################
+Install a SMB File Share:
+apt install samba
+nano /etc/samba/smb.conf
+
+Paste this at the bottom:
+[share]
+comment = Ubuntu File Server Share
+path = Your share location
+browsable = yes
+guest ok = no
+read only = no
+create mask = 0755
+valid users = (Username here)
+
+systemctl restart smbd
+systemctl restart nmbd
+
+ufw allow samba
+
+#######################################
+Connect Linux to smb share:
+apt install cifs-utils
+
+#######################################
+Check status:
+Sudo systemctl status <service here> (ctl c to exit)
+Sudo ufw allow ssh (Allows ssh on firewall)
+
+If the status is inactive do this:
+Sudo systemctl start <service here>
+Sudo systemctl enable <service here>
+#####################################################
+PiVPN Install:
+Curl -L https://install.pivpn.io | bash
+Create client: pivpn -a nopass
+Create QR Code:
+pivpn-qr 
+######################################################
+Generate Certificates:
+./easyrsa gen-req client-name nopass 
+Hit enter, no need for DN
+./easyrsa sign-req client client-name
+
+./easyrsa gen-dh ??
+######################################################
+Proxmox Terminal:
+View VM IDs: 
+pvesh get /cluster/resources --type vm
+VNC into a VM:
+qm vnc VMID
+Start VM from Terminal:
+qm start VMID
+Auto start VM:
+qm set VMID —autostart 1
+###########################################################
+Securely Wipe Data and Write 0s To That Disk Section:
+
+find /path/to/directory -type f -exec shred -uvz -n 3 {} \;
+
+############################################################
+
+Get Certs from a CA:
+certbot --nginx -d yourdomain.com
+
+############################################################
+NextCloud:
+
+Disable account:
+su - www-data -s /bin/bash -c "php /var/www/nextcloud/occ user:disable admin"
+
+su - www-data -s /bin/bash -c "php /var/www/nextcloud/occ user:resetpassword admin"
+
+############################################################
+Add Windows Share to Plex Linux
+mount -t cifs //10.10.10.3/Data /mnt/plex -o username=Access
+
+############################################################
+Surfshark VPN for Linux:
+curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
+
+cat surfshark-install.sh
+
+chmod +x surfshark-install.sh
+Run Surfshark (not working):
+surfshark-vpn
+
+###########################################################
+
+Install Brave:
+curl -fsS https://dl.brave.com/install.sh | sh
+
+###########################################################
+YTDL for Linux:
+
+apt install docker.io
+systemctl start docker
+systemctl enable docker
+usermod -aG docker $USER
+
+docker run -d \
+--name metube \
+-p 8081:8081 \
+-v /home/user/Downloads:/downloads \
+-e UID=$(id -u user) -e GID=$(id -g user) \
+-e BASIC_AUTH=true \ 
+-e BASIC_AUTH_USERNAME=user \
+-e BASIC_AUTH_PASSWORD=AnyPassword \
+-e YTDLP_OPTIONS=--legacy-server-connect \
+--restart unless-stopped \
+ghcr.io/alexta69/metube
+
+ADD IT AS A SERVICE: 
+
+nano /etc/systemd/system/metube.service
+
+((
+
+[Unit]
+Description=MeTube Docker Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker run --rm \
+  --name metube \
+  -p 8081:8081 \
+  -v /home/ad/Downloads:/downloads \
+  -e UID=%u(user) \
+  -e GID=%g(user) \
+  -e BASIC_AUTH=true \
+  -e BASIC_AUTH_USERNAME=user \
+  -e BASIC_AUTH_PASSWORD=Password \
+  -e YTDLP_OPTIONS=--legacy-server-connect \
+  ghcr.io/alexta69/metube
+ExecStop=/usr/bin/docker stop metube
+
+[Install]
+WantedBy=multi-user.target
+
+))
+
+systemctl daemon-reload
+systemctl enable metube.service
+systemctl start metube.service
+
+##############################################################
+
+apt install ffmpeg
+mv sl /usr/local/bin/
+chmod +x /usr/local/bin/sl
+mkdir /home/ad/.stash
+chown ad /home/ad/.stash
+chmod u+rwx /home/ad/.stash
+
+nano /etc/systemd/system/sl.service
+((
+
+[Unit]
+Description=Media
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sl
+WorkingDirectory=/home/ad/.stash
+User=ad
+Group=ad
+Restart=on-failure
+Environment="STASH_CONFIG_FILE=/home/ad/.stash/config.yml"
+
+[Install]
+WantedBy=multi-user.target
+
+))
+
+systemctl daemon-reload
+systemctl enable sl.service
+systemctl start sl.service
+systemctl status sl.service
+Log to check for errors: journalctl -u sl.service -b
+
+###############################################################
