@@ -1,0 +1,94 @@
+apt install -y docker.io
+systemctl enable docker
+systemctl start docker
+
+apt install -y docker-compose
+
+usermod -aG docker $USER
+
+newgrp docker
+
+docker --version
+docker-compose --version
+
+mkdir ~/immich && cd ~/immich
+
+wget https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+wget https://github.com/immich-app/immich/releases/latest/download/example.env -O .env
+
+nano .env
+
+UPLOAD_LOCATION=./upload
+DB_PASSWORD=your_secure_password
+DB_USERNAME=immich
+DB_NAME=immich
+
+mkdir -p ./upload
+mkdir -p ./postgres 
+
+chown -R $USER:$USER ./upload
+chown -R $USER:$USER ./postgres
+
+chmod -R 755 ./upload
+chmod -R 755 ./postgres
+
+sudo ufw allow 2283
+
+nano docker-compose.yml
+
+Remove: start_interval and name
+
+########################################
+Launch Immich:
+docker-compose up -d
+
+Verify it is running:
+docker ps
+
+Check for errors:
+docker-compose logs
+
+################################
+Create a Reverse Proxy for External Access:
+
+apt install -y nginx
+nano /etc/nginx/sites-available/immich
+
+((
+
+server {
+    listen 80;
+    server_name your.domain.com;
+
+    location / {
+        proxy_pass http://localhost:2283;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+))
+
+ln -s /etc/nginx/sites-available/immich /etc/nginx/sites-enabled/
+
+nginx -t
+
+systemctl reload nginx
+
+###############################################
+For HTTPS:
+
+Make sure to open port 443. Also open 80 temporarily to get CA.
+
+apt install -y certbot python3-certbot-nginx
+
+certbot --nginx -d your.domain.com
+
+####################################################
+To Update Immich:
+
+cd ~/immich
+docker-compose pull
+docker-compose up -d
+

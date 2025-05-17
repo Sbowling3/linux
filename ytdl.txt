@@ -1,0 +1,56 @@
+###########################################################
+YTDL for Linux:
+
+apt install docker.io
+systemctl start docker
+systemctl enable docker
+usermod -aG docker $USER
+
+docker run -d \
+--name metube \
+-p 8081:8081 \
+-v /home/user/Downloads:/downloads \
+-e UID=$(id -u user) -e GID=$(id -g user) \
+-e BASIC_AUTH=true \ 
+-e BASIC_AUTH_USERNAME=user \
+-e BASIC_AUTH_PASSWORD=AnyPassword \
+-e YTDLP_OPTIONS=--legacy-server-connect \
+--restart unless-stopped \
+ghcr.io/alexta69/metube
+
+ADD IT AS A SERVICE: 
+
+nano /etc/systemd/system/metube.service
+
+((
+
+[Unit]
+Description=MeTube Docker Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker run --rm \
+  --name metube \
+  -p 8081:8081 \
+  -v /home/ad/Downloads:/downloads \
+  -e UID=%u(user) \
+  -e GID=%g(user) \
+  -e BASIC_AUTH=true \
+  -e BASIC_AUTH_USERNAME=user \
+  -e BASIC_AUTH_PASSWORD=Password \
+  -e YTDLP_OPTIONS=--legacy-server-connect \
+  ghcr.io/alexta69/metube
+ExecStop=/usr/bin/docker stop metube
+
+[Install]
+WantedBy=multi-user.target
+
+))
+
+systemctl daemon-reload
+systemctl enable metube.service
+systemctl start metube.service
+
+##############################################################

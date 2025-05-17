@@ -1,0 +1,46 @@
+######################################
+My WAN Static IP:
+
+IP: 152.117.85.15
+Subnet: 255 255 255 192
+Gateway: 152.117.85.1
+
+Metronet DNS1: 206 225 75 225 
+Metronet DNS2: 206.225.75.226
+
+OpenDNS 208.67.222.222
+OpenDNS 208.67.220.220
+######################################
+Local Network Devices:
+
+My Laptop:
+8c:b8:7e:0f:1e:fa
+10.10.10.11 
+
+Proxmox:
+98:b7:85:00:0d:5d
+10.10.10.7
+Proxmox Port: 8006
+
+Server1:
+bc:24:11:ca:57:f2
+10.10.10.3
+
+Pi Hole:
+bc:24:11:4e:02:01
+10.10.10.2
+
+NextCloud (Disabled):
+bc:24:11:b5:a0:a9
+10.10.10.4
+Closed Port: 443
+
+OpenVPN Server VM:
+BC:24:11:CD:EF:A4
+10.10.10.8
+Open Port: 1194
+
+PlexVM:
+BC:24:11:71:47:16
+10.10.10.5
+Open Port: 32400 (Plex)
