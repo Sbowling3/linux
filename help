@@ -12,8 +12,8 @@ Stay Elevated in Terminal: sudo -i
 Update Linux Packages: apt update && apt upgrade
 Edit Files: nano
 View Files: cat
-Remove Directory: rmdir /path/to
-Remove Directory and All Contents Recursivly: rmdir -rf /path/to
+Remove Empty Directory: rmdir /path/to
+Remove Directory and All Contents Recursivly: rm -rf /path/to
 Remove File: rm /path/to/file
 View Network Info: ip a
 Remove Service: apt remove <service name>
