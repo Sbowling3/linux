@@ -48,6 +48,17 @@ docker ps
 Check for errors:
 docker-compose logs
 
+##########################################
+Fix for incorrect volume size:
+
+Check: lsblk
+Check lvm
+Check: df -h
+
+Run:
+lvresize -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+resize2fs /dev/ubuntu-vg/ubuntu-lv
+
 ################################
 Create a Reverse Proxy for External Access:
 
