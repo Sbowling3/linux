@@ -1,39 +1,48 @@
+############################################################################
+############################################################################
+
 ##########
 LINUX HELP
 ##########
 
-COMMON COMMANDS
-#######################################################
+############################################################################
+COMMON COMMANDS:
+
 Stay Elevated in Terminal: sudo -i
-Update Linux Packages:
-apt update
-apt upgrade
-Edit files: nano
-View files: cat
-View Network Info: ip A or ip addr 
-Remove service: apt remove <service name>
+Update Linux Packages: apt update && apt upgrade
+Edit Files: nano
+View Files: cat
+View Network Info: ip a
+Remove Service: apt remove <service name>
+List All Services: systemctl list-unit-files --type=service
+List Only Enabled Services: systemctl list-unit-files --type=service --state=enabled
+Check Status of Service: systemctl status <service here> (ctl c to exit)
+Change Ownership of Folder: chown -R /Path/To/Folder
+Change Permissions of Folder: chmod -R u=rwx /Path/To/Folder
+List Disks: lsblk
+Check Physical Volumes: pvs
+Check Volume Groups: vgs
+Check Logical Volumes: lvs
+Resize the Physical Volume: pvresize /dev/sdX
+Check the Physical Volume: pvdisplay /dev/sdX
+Logical Volume Resize: lvresize -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
 
-Change Ownership of Folder:
-chown -R /Path/To/Folder
-chmod -R u=rwx /Path/To/Folder
-
-#######################################################
+############################################################################
 NEW LINUX INSTALL STUFF:
 
 apt install openssh-server
 apt install curl
 curl -fsS https://dl.brave.com/install.sh | sh
+git clone https://github.com/Sbowling3/linux
 
 
-#######################################################
+###########################################################################
 Networking settings Location:
 nano /etc/network/interfaces
 
-Setup SSH:
-apt install openssh-server
-
-#######################################
+###########################################################################
 Install a SMB File Share:
+
 apt install samba
 nano /etc/samba/smb.conf
 
@@ -53,23 +62,24 @@ systemctl restart nmbd
 ufw allow samba
 
 #######################################
-Connect Linux to smb share:
-apt install cifs-utils
+Connect Linux To SMB Share: 
 
-#######################################
-Check status:
-Sudo systemctl status <service here> (ctl c to exit)
-Sudo ufw allow ssh (Allows ssh on firewall)
+Install This: apt install cifs-utils
 
-If the status is inactive do this:
-Sudo systemctl start <service here>
-Sudo systemctl enable <service here>
+Create a folder to mount to: mkdir /mnt/share
+Set Permissions: chown -r $USER /path/to/folder
+Mount The Share: mount -t cifs //IP Address/share /mnt/share -o username=SERVER USERNAME
+
+Add Windows Share to Plex Linux:
+mount -t cifs //10.10.10.3/Data /mnt/plex -o username=Access
+
 #####################################################
 PiVPN Install:
 Curl -L https://install.pivpn.io | bash
 Create client: pivpn -a nopass
-Create QR Code:
+Create QR Code For WireGuard:
 pivpn-qr 
+
 ######################################################
 Generate Certificates:
 ./easyrsa gen-req client-name nopass 
@@ -77,6 +87,7 @@ Hit enter, no need for DN
 ./easyrsa sign-req client client-name
 
 ./easyrsa gen-dh ??
+
 ######################################################
 Proxmox Terminal:
 View VM IDs: 
@@ -87,6 +98,7 @@ Start VM from Terminal:
 qm start VMID
 Auto start VM:
 qm set VMID —autostart 1
+
 ###########################################################
 Securely Wipe Data and Write 0s To That Disk Section:
 
@@ -106,10 +118,6 @@ su - www-data -s /bin/bash -c "php /var/www/nextcloud/occ user:disable admin"
 su - www-data -s /bin/bash -c "php /var/www/nextcloud/occ user:resetpassword admin"
 
 ############################################################
-Add Windows Share to Plex Linux
-mount -t cifs //10.10.10.3/Data /mnt/plex -o username=Access
-
-############################################################
 Surfshark VPN for Linux:
 curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
 
@@ -119,100 +127,5 @@ chmod +x surfshark-install.sh
 Run Surfshark (not working):
 surfshark-vpn
 
-###########################################################
-
-Install Brave:
-curl -fsS https://dl.brave.com/install.sh | sh
-
-###########################################################
-YTDL for Linux:
-
-apt install docker.io
-systemctl start docker
-systemctl enable docker
-usermod -aG docker $USER
-
-docker run -d \
---name metube \
--p 8081:8081 \
--v /home/user/Downloads:/downloads \
--e UID=$(id -u user) -e GID=$(id -g user) \
--e BASIC_AUTH=true \ 
--e BASIC_AUTH_USERNAME=user \
--e BASIC_AUTH_PASSWORD=AnyPassword \
--e YTDLP_OPTIONS=--legacy-server-connect \
---restart unless-stopped \
-ghcr.io/alexta69/metube
-
-ADD IT AS A SERVICE: 
-
-nano /etc/systemd/system/metube.service
-
-((
-
-[Unit]
-Description=MeTube Docker Service
-Requires=docker.service
-After=docker.service
-
-[Service]
-Restart=always
-ExecStart=/usr/bin/docker run --rm \
-  --name metube \
-  -p 8081:8081 \
-  -v /home/ad/Downloads:/downloads \
-  -e UID=%u(user) \
-  -e GID=%g(user) \
-  -e BASIC_AUTH=true \
-  -e BASIC_AUTH_USERNAME=user \
-  -e BASIC_AUTH_PASSWORD=Password \
-  -e YTDLP_OPTIONS=--legacy-server-connect \
-  ghcr.io/alexta69/metube
-ExecStop=/usr/bin/docker stop metube
-
-[Install]
-WantedBy=multi-user.target
-
-))
-
-systemctl daemon-reload
-systemctl enable metube.service
-systemctl start metube.service
-
-##############################################################
-
-apt install ffmpeg
-mv sl /usr/local/bin/
-chmod +x /usr/local/bin/sl
-mkdir /home/ad/.stash
-chown ad /home/ad/.stash
-chmod u+rwx /home/ad/.stash
-
-nano /etc/systemd/system/sl.service
-((
-
-[Unit]
-Description=Media
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/sl
-WorkingDirectory=/home/ad/.stash
-User=ad
-Group=ad
-Restart=on-failure
-Environment="STASH_CONFIG_FILE=/home/ad/.stash/config.yml"
-
-[Install]
-WantedBy=multi-user.target
-
-))
-
-systemctl daemon-reload
-systemctl enable sl.service
-systemctl start sl.service
-systemctl status sl.service
-Log to check for errors: journalctl -u sl.service -b
-
-###############################################################
+############################################################################
+############################################################################
