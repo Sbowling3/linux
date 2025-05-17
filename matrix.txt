@@ -1,0 +1,35 @@
+apt install -y build-essential python3-dev libffi-dev python3-pip python3-setuptools \
+sqlite3 libssl-dev virtualenv libjpeg-dev libxslt1-dev libicu-dev
+
+apt install -y nginx
+
+apt install -y certbot python3-certbot-nginx
+
+apt install -y docker.io docker-compose
+
+systemctl enable docker
+
+systemctl start docker
+
+mkdir /matrix && cd /matrix
+
+docker run -it --rm \
+-v /matrix:/data \
+-e SYNAPSE_SERVER_NAME=chat.sbnet.org \
+-e SYNAPSE_REPORT_STATS=no \
+matrixdotorg/synapse:latest generate
+
+Verify that homeserver.yaml and signing keys were created:
+ls /matrix
+
+nano /matrix/homeserver.yaml
+
+add:
+enable_registration: true
+enable_registration_without_verification: true
+public_baseurl: https://matrix.example.com
+
+
+YOU ARE HERE
+
+nano /etc/nginx/sites-available/matrix.example.com
