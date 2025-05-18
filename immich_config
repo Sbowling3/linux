@@ -29,14 +29,11 @@ mkdir -p ./postgres
 chown -R $USER:$USER ./upload
 chown -R $USER:$USER ./postgres
 
-chmod -R 755 ./upload
-chmod -R 755 ./postgres
-
 sudo ufw allow 2283
 
 nano docker-compose.yml
 
-Remove: start_interval and name
+Remove Lines: name and start_interval
 
 ########################################
 Launch Immich:
@@ -49,6 +46,16 @@ Check for errors:
 docker-compose logs
 
 ##########################################
+Add External Folders:
+
+mkdir /mnt/external
+chown -R ad:ad /mnt/external
+
+Edit docker-compose.yml
+Under Volumes Add:
+-/path/to/folder:/mnt/external
+
+###########################################
 Fix for incorrect volume size:
 
 Check: lsblk
