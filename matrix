@@ -1,35 +1,248 @@
-apt install -y build-essential python3-dev libffi-dev python3-pip python3-setuptools \
-sqlite3 libssl-dev virtualenv libjpeg-dev libxslt1-dev libicu-dev
+apt install -y build-essential python3-dev libffi-dev python3-pip sqlite3 libssl-dev python3-virtualenv libjpeg-dev libxslt1-dev
+
+wget -O /usr/share/keyrings/matrix-org-archive-keyring.gpg https://packages.matrix.org/debian/matrix-org-archive-keyring.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/matrix-org-archive-keyring.gpg] https://packages.matrix.org/debian/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/matrix-org.list
+
+apt update
+
+apt install -y matrix-synapse-py3
+
+nano /etc/matrix-synapse/homeserver.yaml
+
+((((((((((((((((((((((((((((((((
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ['127.0.0.1']
+    resources:
+      - names: [client, federation]
+        compress: false
+
+))))))))))))))))))))))))))))))))))
+
+cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1
+
+registration_shared_secret: "your_generated_secret_here"
+
+systemctl restart matrix-synapse
+
+systemctl status matrix-synapse
 
 apt install -y nginx
 
+nano /etc/nginx/sites-available/matrix
+((((((((((((((((((((((((((((((((((((((((((((((((((((((
+
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name matrix.mydomain.com;
+
+    location /_matrix {
+        proxy_pass http://127.0.0.1:8008;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+    }
+
+    location /_synapse/client {
+        proxy_pass http://127.0.0.1:8008;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+    }
+}
+
+
+)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+
+nginx -t
+
+systemctl restart nginx
+
 apt install -y certbot python3-certbot-nginx
 
-apt install -y docker.io docker-compose
+certbot --nginx --agree-tos --no-eff-email --email sam@sbnet.org -d chat.sbnet.org
 
-systemctl enable docker
+openssl dhparam -dsaparam -out /etc/ssl/certs/dhparam.pem 4096
 
-systemctl start docker
+nano /etc/nginx/sites-available/matrix
+((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
 
-mkdir /matrix && cd /matrix
+server {
+    listen 80;
+    listen [::]:80;
+    server_name matrix.yourdomain.com;
 
-docker run -it --rm \
--v /matrix:/data \
--e SYNAPSE_SERVER_NAME=chat.sbnet.org \
--e SYNAPSE_REPORT_STATS=no \
-matrixdotorg/synapse:latest generate
+    # Redirect HTTP to HTTPS
+    return 301 https://$host$request_uri;
+}
 
-Verify that homeserver.yaml and signing keys were created:
-ls /matrix
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name matrix.yourdomain.com;
 
-nano /matrix/homeserver.yaml
+    ssl_certificate /etc/letsencrypt/live/matrix.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/matrix.yourdomain.com/privkey.pem;
+    ssl_dhparam /etc/ssl/certs/dhparam.pem;
 
-add:
-enable_registration: true
-enable_registration_without_verification: true
-public_baseurl: https://matrix.example.com
+    location /_matrix {
+        proxy_pass http://127.0.0.1:8008;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+    }
+
+    location /_synapse/client {
+        proxy_pass http://127.0.0.1:8008;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+    }
+}
+
+server {
+    listen 8448 ssl;
+    listen [::]:8448 ssl;
+    server_name matrix.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/matrix.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/matrix.yourdomain.com/privkey.pem;
+    ssl_dhparam /etc/ssl/certs/dhparam.pem;
+
+    location /_matrix {
+        proxy_pass http://127.0.0.1:8008;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+    }
+}
 
 
-YOU ARE HERE
+))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 
-nano /etc/nginx/sites-available/matrix.example.com
+
+ln -s /etc/nginx/sites-available/matrix /etc/nginx/sites-enabled/
+
+nginx -t
+
+systemctl restart nginx
+
+systemctl status nginx
+
+ufw allow 22
+ufw allow 443
+ufw allow 8448
+ufw allow 80
+
+ufw enable
+ufw status
+
+###################################################################################
+Create Admin User:
+register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml http://localhost:8008
+
+###################################################################################
+
+Install Element:
+apt install -y jq
+
+wget https://github.com/element-hq/element-web/releases/download/v1.11.101/element-v1.11.101.tar.gz
+
+tar -xzf element-v1.11.101.tar.gz
+mv element-v1.11.101/* .
+rm -rf element-v1.11.101
+rm element-v1.11.101.tar.gz
+
+cp config.sample.json config.json
+
+nano config.json
+
+(((((((((((((((((((((((((((
+
+"default_server_config": {
+    "m.homeserver": {
+        "base_url": "https://matrix.yourdomain.com",
+        "server_name": "matrix.yourdomain.com"
+    }
+}
+
+))))))))))))))))))))))))))))
+
+nano /etc/nginx/sites-available/matrix
+
+(((((((((((((((((((((((((((((((((((((((((((((
+Add new server blocks for Element:
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name element.sbnet.org;
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name element.sbnet.org;
+
+    ssl_certificate /etc/letsencrypt/live/element.sbnet.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/element.sbnet.org/privkey.pem;
+    ssl_dhparam /etc/ssl/certs/dhparam.pem;
+
+    root /var/www/element;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+))))))))))))))))))))))))))))))))))))))))))))))))))
+
+certbot --nginx --agree-tos --no-eff-email --email sam@sbnet.org -d element.sbnet.org
+
+nginx -t 
+
+systemctl restart nginx
+
+#################################################
+Should be able to acces via: 
+https://element.sbnet.org
+
+Click edit Under Homeserver and enter: 
+https://chat.sbnet.org
+
+#################################################
+
+apt install -y postgresql postgresql-contrib
+-u postgres psql -c "CREATE DATABASE synapse ENCODING 'UTF8' LC_COLLATE='C' LC_CTYPE='C' template=template0 OWNER synapse_user;"
+
+nano /etc/matrix-synapse/homeserver.yaml
+
+((((((((((((((((((((((((((((((((((((((((((((((((
+
+database:
+  name: psycopg2
+  args:
+    user: synapse_user
+    password: your_password
+    database: synapse
+    host: localhost
+    cp_min: 5
+    cp_max: 10
+
+
+))))))))))))))))))))))))))))))))))))))))))))))))
+
+
+FOR VOICE AND VIDEO:
+
+apt install -y coturn
+
+
