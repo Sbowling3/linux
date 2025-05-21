@@ -245,4 +245,55 @@ FOR VOICE AND VIDEO:
 
 apt install -y coturn
 
+nano /etc/turnserver.conf
+((((((((((((((((((((((((((((((((((((((((((((((((
+# Basic settings
+listening-port=3478
+fingerprint
+lt-cred-mech
+use-auth-secret
+static-auth-secret=YourStaticAuthSecretHere
+realm=yourdomain.com
+total-quota=100
+bps-capacity=0
+stale-nonce
 
+# Networking
+external-ip=<your_external_ip>
+min-port=49160
+max-port=49200
+
+# Certificates for TLS
+cert=/etc/letsencrypt/live/yourdomain.com/fullchain.pem
+pkey=/etc/letsencrypt/live/yourdomain.com/privkey.pem
+
+# Logging
+log-file=/var/log/turnserver.log
+simple-log
+
+))))))))))))))))))))))))))))))))))))))))))))))))
+
+
+Generate YourStaticAuthSecretHere: openssl rand -base64 32
+
+
+sed -i 's/^#TURNSERVER_ENABLED=.*/TURNSERVER_ENABLED=1/' /etc/default/coturn
+systemctl enable coturn
+systemctl start coturn
+
+##################################################
+Add This to homeserver.yaml:
+
+# VoIP settings
+turn_uris: [ "turn:chat.sbnet.org:3478?transport=udp", "turn:chat.sbnet.org:3478?transport=tcp" ]
+turn_shared_secret: "your_shared_secret"
+turn_user_lifetime: 86400000
+turn_allow_guests: false
+#######################################
+
+systemctl restart matrix-synapse
+
+
+Open The Following Ports for TURN Server:
+3478 TCP/UDP
+49160–49200 UDP
