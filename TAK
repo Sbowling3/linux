@@ -1,0 +1,24 @@
+
+################################################
+TAK Server Install  ############################
+################################################
+
+Recommend Using Ubuntu Server
+
+
+################################################
+
+apt update && apt upgrade -y
+
+apt install unzip openjdk-17-jdk maven git curl -y
+
+Verify Java Version: java -version
+
+unzip tak-server-bundle.zip
+
+cd tak-server
+
+./install.sh
+
+
+
