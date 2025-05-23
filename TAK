@@ -28,7 +28,30 @@ apt install postgresql-15 postgresql-15-postgis-3 -y
 systemctl enable postgresql
 systemctl start postgresql
 systemctl status postgresql
+chown -R postgres:postgres /var/lib/postgresql
+systemctl restart postgresql
 
+nano /etc/postgresql/15/main/pg_hba.conf
+(((((((((((((((((((((((
+local   all             postgres                                peer
+))))))))))))))))))))))
+systemctl restart postgresql
+sudo -i -u postgres psql
+CREATE USER martiuser WITH PASSWORD 'martipass';
+ALTER USER postgres WITH PASSWORD 'changeme123';
+CREATE DATABASE tak OWNER martiuser;
+GRANT ALL PRIVILEGES ON DATABASE tak TO martiuser;
+\q
+
+Test to ensure permissions work: psql -U martiuser -d tak -h localhost -W
+
+cp /opt/tak/CoreConfig.example.xml /opt/tak/CoreConfig.xml
+nano /opt/tak/CoreConfig.xml
+(((((((((((((((((((((((((
+Change mariuser password to the one you set 
+)))))))))))))))))))))))))
+
+cd /home/ad/tak
 dpkg -i takserver_5.4-RELEASE19_all.deb
 apt install -f
 
