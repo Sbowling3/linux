@@ -55,9 +55,30 @@ cd /home/ad/tak
 dpkg -i takserver_5.4-RELEASE19_all.deb
 apt install -f
 
+nano /etc/systemd/system/takserver.services
+((((((((((((((((((((((((((((((((((((((
+[Unit]
+Description=TAK Server Service
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=tak
+Group=tak
+WorkingDirectory=/opt/tak
+ExecStart=/usr/bin/java -Xmx2g -Xms2g -jar /opt/tak/takserver.war
+Restart=on-failure
+Environment="SPRING_CONFIG_LOCATION=/opt/tak/CoreConfig.xml"
+SuccessExitStatus=0 143
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+))))))))))))))))))))))))))))))))))))))))
 
 systemctl start takserver
 systemctl enable takserver
-
 systemctl status takserver
 
